@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0d1117">
+  <title>Giant | المدرس الذكي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600;700;800&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-glass: rgba(22, 27, 34, 0.7);
+      --primary: #2ea043;
+      --primary-hover: #3fb950;
+      --accent: #58a6ff;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --border: #30363d;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --error: #f85149;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+    h1, h2, h3, .brand { font-family: 'Alexandria', sans-serif; }
+    
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    button { cursor: pointer; border: none; background: none; font: inherit; outline: none; transition: 0.2s ease; }
+    
+    .network-banner {
+      background: var(--error); color: white; text-align: center; padding: 6px 12px;
+      font-size: 13px; font-weight: bold; display: none; position: sticky; top: 0; z-index: 101;
+    }
+
+    header {
+      background: var(--surface-glass); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+      padding: 15px 5%; display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .brand { font-size: 24px; font-weight: 800; color: white; display: flex; align-items: center; gap: 10px; }
+    .brand span { color: var(--primary); }
+    
+    .share-btn {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .share-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    main { flex: 1; display: flex; flex-direction: column; max-width: 900px; margin: 0 auto; width: 100%; padding: 20px; }
+    
+    .subjects { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+    .subjects::-webkit-scrollbar { display: none; }
+    .subject-btn {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+      padding: 10px 20px; border-radius: 12px; font-weight: 600; white-space: nowrap;
+    }
+    .subject-btn.active { background: rgba(46, 160, 67, 0.1); border-color: var(--primary); color: var(--primary); }
+
+    .chat-container {
+      flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow);
+    }
+    .chat-messages {
+      flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;
+    }
+    
+    .message { max-width: 85%; padding: 14px 18px; border-radius: 16px; font-size: 15px; line-height: 1.8; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .msg-user { background: var(--border); color: white; align-self: flex-start; border-bottom-right-radius: 4px; }
+    .msg-ai { background: rgba(88, 166, 255, 0.1); border: 1px solid rgba(88, 166, 255, 0.2); color: #e6edf3; align-self: flex-end; border-bottom-left-radius: 4px; }
+    .msg-error { background: rgba(248, 81, 73, 0.15); border: 1px solid rgba(248, 81, 73, 0.3); color: #ff8182; align-self: center; text-align: center; }
+    
+    .msg-ai h3 { color: var(--accent); font-size: 16px; margin-bottom: 8px; margin-top: 12px; }
+    .msg-ai h3:first-child { margin-top: 0; }
+    .msg-ai p, .msg-ai ul { margin-bottom: 10px; }
+    .msg-ai ul { padding-right: 20px; }
+
+    .retry-btn {
+      margin-top: 8px; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 5px 12px; border-radius: 8px; font-size: 12px;
+      display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+    }
+    .retry-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .typing { display: flex; gap: 5px; align-items: center; justify-content: center; padding: 10px; }
+    .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+    .dot:nth-child(1) { animation-delay: -0.32s; } .dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    .input-area {
+      padding: 15px; border-top: 1px solid var(--border); background: var(--surface-glass);
+      display: flex; gap: 10px; align-items: flex-end;
+    }
+    .input-wrapper { flex: 1; position: relative; }
+    textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 16px; color: white; resize: none; min-height: 50px; max-height: 150px;
+      font-size: 15px; line-height: 1.5; outline: none; transition: 0.2s;
+    }
+    textarea:focus { border-color: var(--accent); }
+    .send-btn {
+      background: var(--primary); color: white; width: 50px; height: 50px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .send-btn:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-2px); }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--primary); color: white; padding: 10px 20px; border-radius: 30px;
+      font-size: 14px; font-weight: 600; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 1000;
+    }
+    .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+    footer {
+      text-align: center;
+      padding: 12px 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+      background: var(--surface-glass);
+      margin-top: auto;
+    }
+    footer span {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .dev-line { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: -2px; }
+    .head-btns { display: flex; gap: 8px; }
+    .chips { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.25); color: var(--accent);
+      padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .chip:hover { background: rgba(88,166,255,0.18); }
+    .msg-tools { margin-top: 8px; }
+    .copy-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      padding: 4px 12px; border-radius: 8px; font-size: 12px; }
+    .copy-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .msg-ai code { background: rgba(0,0,0,0.35); padding: 1px 6px; border-radius: 6px; direction: ltr; unicode-bidi: embed; }
+    .msg-ai li { margin-bottom: 4px; }
+    @media (max-width: 600px) {
+      .message { max-width: 95%; }
+      header { padding: 12px 20px; }
+      main { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="network-banner" id="networkBanner">⚠️ لا يوجد اتصال بالإنترنت حالياً!</div>
+
+  <header>
+    <div><div class="brand">Giant <span>AI</span></div><div class="dev-line">تطوير: جرجس منتصر اسحق</div></div>
+    <div class="head-btns"><button class="share-btn" onclick="clearChat()">🗑️ مسح</button>
+    <button class="share-btn" onclick="shareApp()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      شارك
+    </button></div>
+  </header>
+
+  <main>
+    <div class="subjects" id="subject-container">
+      <button class="subject-btn active" data-sub="الرياضيات">📐 الرياضيات</button>
+      <button class="subject-btn" data-sub="العلوم المتكاملة">🔬 العلوم المتكاملة</button>
+      <button class="subject-btn" data-sub="الفلسفة">💡 الفلسفة</button>
+      <button class="subject-btn" data-sub="المنطق">⚖️ المنطق</button>
+    </div>
+
+    <div class="chips" id="chips"></div>
+
+    <div class="chat-container">
+      <div class="chat-messages" id="chat">
+        <div class="message msg-ai">
+          أهلاً ومرحباً بك يا بطل في منصة <strong>Giant</strong> التعليمية 👋<br>
+          أنا مساعدك الذكي للمذاكرة. اختر المادة من الأعلى، واكتب أي مسألة أو مفهوم تريد شرحه وسأبسطه لك خطوة بخطوة.<br><br>
+          💻 <strong>تطوير وبرمجة:</strong> <span style="color: var(--accent);">جرجس منتصر اسحق</span>
+        </div>
+      </div>
+      
+      <div class="input-area">
+        <div class="input-wrapper">
+          <textarea id="prompt" placeholder="اكتب سؤالك أو المسألة هنا..." rows="1"></textarea>
+        </div>
+        <button class="send-btn" id="sendBtn" title="إرسال">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    تم التصدير والتطوير بواسطة <span>جرجس منتصر اسحق</span> © جميع الحقوق محفوظة
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const promptInput = document.getElementById('prompt');
+    const sendBtn = document.getElementById('sendBtn');
+    const subjects = document.querySelectorAll('.subject-btn');
+    const toast = document.getElementById('toast');
+    const networkBanner = document.getElementById('networkBanner');
+    
+    const welcomeHTML = chat.innerHTML;
+    const SUGGESTIONS = {
+      'الرياضيات': [
+        'ما هو العدد التخيلي i؟',
+        'اشرح الأعداد المركبة بأمثلة',
+        'كيف أجمع وأطرح الأعداد المركبة؟',
+        'كيف أضرب وأقسم الأعداد المركبة؟',
+        'ما هو المرافق للعدد المركب؟',
+        'اشرح قوى i (i²، i³، i⁴)',
+        'ما شروط تشابه مثلثين؟',
+        'اشرح تشابه المثلثات بمثال',
+        'كيف أوجد طول ضلع مجهول باستخدام التشابه؟',
+        'ما العلاقة بين مساحتي مضلعين متشابهين؟',
+        'حل المعادلة x+10=0',
+        'ما الفرق بين الأعداد النسبية وغير النسبية؟',
+        'اشرح قوانين الأسس بأمثلة',
+        'كيف أحلل المقدار x²-9؟',
+        'اشرح حل معادلة الدرجة الثانية',
+        'اشرح المتباينات وتمثيلها على خط الأعداد',
+        'ما هي المجموعات والفترات؟',
+        'اشرح نظرية فيثاغورس بمثال',
+        'اشرح تشابه المثلثات'
+      ],
+      'العلوم المتكاملة': [
+        'ما هي خواص الماء؟',
+        'لماذا يعتبر الماء مذيباً عاماً؟',
+        'ما أهمية الماء للكائنات الحية؟',
+        'اشرح دورة الماء في الطبيعة',
+        'ما الفرق بين الماء العذب والماء المالح؟',
+        'ما هي مصادر المياه في مصر؟',
+        'كيف نحافظ على المياه من التلوث والهدر؟',
+        'اشرح تنقية مياه الشرب',
+        'ما هي الروابط الهيدروجينية في الماء؟',
+        'اشرح قوانين نيوتن للحركة',
+        'ما الفرق بين السرعة والعجلة؟',
+        'ما الفرق بين العنصر والمركب والمخلوط؟',
+        'اشرح الجدول الدوري ببساطة',
+        'ما هي الروابط الكيميائية؟',
+        'اشرح الخلية وأجزاءها',
+        'ما هو الـ DNA وما وظيفته؟',
+        'اشرح الطاقة وتحولاتها',
+        'كيف تتكون المجرات والنجوم؟'
+      ],
+      'الفلسفة': [
+        'ما هي الفلسفة ولماذا ندرسها؟',
+        'ما الفرق بين الفلسفة والعلم؟',
+        'ما هي فروع الفلسفة؟',
+        'من هو سقراط وما منهجه؟',
+        'ما هو التفكير الناقد؟',
+        'ما الفرق بين الرأي والحقيقة؟',
+        'اشرح مفهوم المعرفة ومصادرها',
+        'ما هي الأخلاق في الفلسفة؟'
+      ],
+      'المنطق': [
+        'ما هو علم المنطق وما فائدته؟',
+        'اشرح القياس المنطقي بمثال',
+        'ما هي أنواع القضايا الحملية؟',
+        'ما الفرق بين الحد الكلي والجزئي؟',
+        'ما هي المغالطات المنطقية؟',
+        'اشرح التعريف وشروطه',
+        'ما الفرق بين التناقض والتضاد؟',
+        'اشرح قوانين الفكر الثلاثة'
+      ]
+    };
+
+    function renderChips() {
+      const box = document.getElementById('chips');
+      box.innerHTML = '';
+      (SUGGESTIONS[currentSubject] || []).forEach(q => {
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.textContent = q;
+        b.onclick = () => { if (isGenerating) return; promptInput.value = q; handleSend(); };
+        box.appendChild(b);
+      });
+    }
+
+    function inline(t) {
+      return t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`(.+?)`/g, '<code>$1</code>');
+    }
+    function formatReply(t) {
+      const esc = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      let out = '', inList = false;
+      esc.split('\n').forEach(line => {
+        const li = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
+        if (li) { if (!inList) { out += '<ul>'; inList = true; } out += '<li>' + inline(li[1]) + '</li>'; return; }
+        if (inList) { out += '</ul>'; inList = false; }
+        const h = line.match(/^#{1,4}\s+(.*)$/);
+        if (h) { out += '<h3>' + inline(h[1]) + '</h3>'; return; }
+        if (line.trim() === '') return;
+        out += '<p>' + inline(line) + '</p>';
+      });
+      if (inList) out += '</ul>';
+      return out;
+    }
+    function addCopyBtn(div, text) {
+      const tools = document.createElement('div');
+      tools.className = 'msg-tools';
+      const b = document.createElement('button');
+      b.className = 'copy-btn';
+      b.textContent = '📋 نسخ';
+      b.onclick = async () => {
+        try { await navigator.clipboard.writeText(text); showToast('تم نسخ الإجابة'); } catch (e) { showToast('تعذر النسخ'); }
+      };
+      tools.appendChild(b);
+      div.appendChild(tools);
+    }
+    function errText(err) {
+      const m = err && err.message;
+      if (m === 'AUTH') return 'مفتاح الـ API مفقود أو غير صحيح 🔑';
+      if (m === 'LIMIT') return 'انتهى رصيد الاستخدام المسموح حالياً ⏳ جرب لاحقاً.';
+      return 'عذراً، حدث ضعف أو انقطاع في الاتصال بالخادم 🌐.';
+    }
+    window.clearChat = function() {
+      if (isGenerating) return;
+      chat.innerHTML = welcomeHTML;
+      chatHistory = [];
+      showToast('تم مسح المحادثة');
+    };
+
+    let currentSubject = 'الرياضيات';
+    let chatHistory = [];
+    let isGenerating = false;
+    let lastUserQuery = '';
+
+    function updateOnlineStatus() {
+      if (!navigator.onLine) {
+        networkBanner.style.display = 'block';
+      } else {
+        networkBanner.style.display = 'none';
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    subjects.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (isGenerating) return;
+        subjects.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSubject = btn.dataset.sub;
+        chatHistory = []; 
+        promptInput.placeholder = `اسألني أي شيء في ${currentSubject}...`;
+        renderChips();
+        appendMessage('ai', `تم التبديل إلى <strong>${currentSubject}</strong>. كيف يمكنني مساعدتك فيها اليوم؟`);
+      });
+    });
+
+    window.shareApp = async function() {
+      const shareData = {
+        title: 'Giant | المدرس الذكي',
+        text: 'جرب المدرس الذكي اللي بيحلل المسائل وبيشرح خطوة بخطوة، مجاني بالكامل وبدون حساب!',
+        url: window.location.href
+      };
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          showToast('تم نسخ رابط التطبيق بنجاح!');
+        }
+      } catch (err) {
+        console.error('خطأ:', err);
+      }
+    };
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function appendMessage(sender, htmlContent) {
+      const div = document.createElement('div');
+      div.className = `message msg-${sender}`;
+      div.innerHTML = htmlContent;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    }
+
+    function adjustTextareaHeight() {
+      promptInput.style.height = 'auto';
+      promptInput.style.height = (promptInput.scrollHeight) + 'px';
+    }
+    promptInput.addEventListener('input', adjustTextareaHeight);
+
+    // ===== إعدادات الذكاء الاصطناعي =====
+    // 1) سجّل مجاناً على https://enter.pollinations.ai
+    // 2) انسخ المفتاح (يبدأ بـ pk_) وحطه هنا بين علامتي التنصيص
+    const API_KEY = 'sk_DLRIbtUNNUmSpuJbLlPd02XTIfPhyehF';
+    const API_URL = 'https://gen.pollinations.ai/v1/chat/completions';
+
+    async function fetchAIResponse(messages) {
+      const models = ['openai', 'mistral'];
+      let lastError = null;
+
+      for (let model of models) {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 25000);
+          try {
+            const headers = { "Content-Type": "application/json" };
+            if (API_KEY) headers["Authorization"] = "Bearer " + API_KEY;
+
+            const response = await fetch(API_URL, {
+              method: "POST",
+              headers: headers,
+              body: JSON.stringify({ model: model, messages: messages }),
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+              const data = await response.json();
+              const text = data?.choices?.[0]?.message?.content;
+              if (text && text.trim().length > 0) return text;
+            } else {
+              lastError = new Error("HTTP " + response.status);
+              if (response.status === 402 || response.status === 429) throw new Error("LIMIT");
+              if (response.status === 401 || response.status === 403) {
+                throw new Error("AUTH");
+              }
+            }
+          } catch (err) {
+            clearTimeout(timeoutId);
+            if (err.message === "AUTH" || err.message === "LIMIT") throw err;
+            lastError = err;
+            await new Promise(r => setTimeout(r, 800));
+          }
+        }
+      }
+      throw lastError || new Error("فشل الاتصال بجميع الخوادم المتاحة.");
+    }
+
+    async function handleSend(customText = null) {
+      const text = customText || promptInput.value.trim();
+      if (!text || isGenerating) return;
+
+      if (!navigator.onLine) {
+        showToast('تأكد من الاتصال بالإنترنت أولاً!');
+        return;
+      }
+
+      lastUserQuery = text;
+      if (!customText) {
+        promptInput.value = '';
+        adjustTextareaHeight();
+        appendMessage('user', text);
+      }
+
+      isGenerating = true;
+      sendBtn.disabled = true;
+
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'message msg-ai typing';
+      typingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+      chat.appendChild(typingIndicator);
+      chat.scrollTop = chat.scrollHeight;
+
+      try {
+        const systemPrompt = `أنت Giant، مدرس مساعد عبقري لطلاب الصف الأول الثانوي في مصر. مادتك الحالية هي: ${currentSubject}. تحدث بلغة عربية سلسة، ودودة ومشجعة. اشرح الفكرة أولاً، ثم خطوات الحل، ثم النتيجة. استخدم العناوين العريضة (###) لتنظيم إجابتك.`;
+
+        const messages = [
+          { role: 'system', content: systemPrompt },
+          ...chatHistory.slice(-4),
+          { role: 'user', content: text }
+        ];
+
+        const fullReply = await fetchAIResponse(messages);
+        
+        typingIndicator.remove();
+        const msgDiv = appendMessage('ai', '');
+        
+        msgDiv.innerHTML = formatReply(fullReply);
+        addCopyBtn(msgDiv, fullReply);
+        chat.scrollTop = chat.scrollHeight;
+
+        chatHistory.push({ role: 'user', content: text });
+        chatHistory.push({ role: 'assistant', content: fullReply });
+
+      } catch (err) {
+        typingIndicator.remove();
+        const errDiv = appendMessage('error', `
+          ${errText(err)}<br>
+          <button class="retry-btn" onclick="retryLastQuery()">🔄 إعادة المحاولة</button>
+        `);
+      } finally {
+        isGenerating = false;
+        sendBtn.disabled = false;
+        promptInput.focus();
+      }
+    }
+
+    window.retryLastQuery = function() {
+      if (lastUserQuery) {
+        const lastMsg = chat.querySelector('.msg-error:last-child');
+        if (lastMsg) lastMsg.remove();
+        handleSend(lastUserQuery);
+      }
+    };
+
+    renderChips();
+    sendBtn.addEventListener('click', () => handleSend());
+    promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+  </script>
+</body>
+</html>
